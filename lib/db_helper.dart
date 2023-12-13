@@ -1,6 +1,7 @@
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart' as pth;
 import 'dart:async';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class DBHelper {
   static Database? _db;
@@ -14,6 +15,9 @@ class DBHelper {
   }
 
   initDatabase() async {
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
+
     var databasesPath = await getDatabasesPath();
     String path = pth.join(databasesPath, 'user.db');
     var db = await openDatabase(path, version: 1, onCreate: _onCreate);
@@ -27,6 +31,21 @@ class DBHelper {
   Future<int> saveUser(User user) async {
     var dbClient = await db;
     return await dbClient.insert('user', user.toMap());
+  }
+
+  Future<List<User>> getUsers() async {
+    var dbClient = await db;
+    List<Map<String, dynamic>> maps = await dbClient.query('user');
+    return List.generate(maps.length, (index) {
+      return User(
+        maps[index]['id'],
+        maps[index]['username'],
+        maps[index]['password'],
+        maps[index]['phone'],
+        maps[index]['email'],
+        maps[index]['address'],
+      );
+    });
   }
 
   //test read
